@@ -1,6 +1,6 @@
 import network
-import socket
 import ujson
+import socket
 from machine import Pin
 import time
 
@@ -19,18 +19,13 @@ def connect_wifi():
     wlan.connect(SSID, PASSWORD)
 
     print("Connecting to WiFi", end="")
-    for _ in range(10):  # Wait for max 5 seconds
-        if wlan.isconnected():
-            break
+    while not wlan.isconnected():
         print(".", end="")
         time.sleep(0.5)
 
-    if wlan.isconnected():
-        print("\nWiFi Connected:", wlan.ifconfig())
-    else:
-        print("\nFailed to connect to WiFi")
+    print("\nWiFi Connected:", wlan.ifconfig())
 
-# Simple HTTP Server for Alexa
+# Simple HTTP Server to handle Alexa and browser requests
 def start_server():
     addr = socket.getaddrinfo("0.0.0.0", 80)[0][-1]
     s = socket.socket()
@@ -43,46 +38,28 @@ def start_server():
         conn, addr = s.accept()
         print("Connection from:", addr)
 
-        request = conn.recv(1024)
-        request = str(request)
+        request = conn.recv(1024).decode("utf-8")
         print("Request:", request)
 
-        # Serve XML for Alexa device discovery
-        if "description.xml" in request:
-            response = """HTTP/1.1 200 OK
-Content-Type: text/xml
+        # Extract the requested path
+        first_line = request.split("\n")[0]  # First line of HTTP request
+        path = first_line.split(" ")[1]      # Extract path after GET
 
-<?xml version="1.0"?>
-<root>
-    <device>
-        <deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType>
-        <friendlyName>ESP32 Light</friendlyName>
-        <manufacturer>ESPHome</manufacturer>
-        <modelName>ESP32</modelName>
-        <UDN>uuid:esp32-1234</UDN>
-        <serviceList>
-            <service>
-                <serviceType>urn:schemas-upnp-org:service:SwitchPower:1</serviceType>
-                <controlURL>/api</controlURL>
-            </service>
-        </serviceList>
-    </device>
-</root>"""
-            conn.send(response)
+        response = ""
 
-        # Handle Alexa ON/OFF commands
-        elif "/api" in request:
-            if "on" in request:
+        # Check if the request is for turning the LED on/off
+        if "/api" in path:
+            if "on" in path:
                 led.value(1)
                 response = ujson.dumps({"status": "ON"})
-            elif "off" in request:
+            elif "off" in path:
                 led.value(0)
                 response = ujson.dumps({"status": "OFF"})
             else:
                 response = ujson.dumps({"error": "Invalid Request"})
 
-            conn.send("HTTP/1.1 200 OK\nContent-Type: application/json\n\n" + response)
-
+        # Send HTTP response
+        conn.send("HTTP/1.1 200 OK\nContent-Type: application/json\n\n" + response)
         conn.close()
 
 # Run Everything
