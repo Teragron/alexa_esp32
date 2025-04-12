@@ -32,6 +32,9 @@ http://<ESP32_IP>/api?off
 --------------------------------------------------
 
 🎯 Need Help?
-If you encounter any issues, double-check your Wi-Fi credentials and ensure your ESP32 is connected to the same network as your browser.
-
+If the COM is not visible on the device manager list make sure you are using a USB-Cable capable of transferring data
+If the device is busy run the following command with the correct port and the correct firmware path inside a terminal after installing python and esptool:
+```bash
+python -m esptool --port COM4 write_flash 0x1000 ESP32_GENERIC-20241129-v1.24.1.bin
+```
 Enjoy your ESP32 smart home setup! 🚀💡
