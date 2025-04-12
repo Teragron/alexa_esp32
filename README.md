@@ -37,4 +37,5 @@ If the device is busy run the following command with the correct port and the co
 ```bash
 python -m esptool --port COM4 write_flash 0x1000 ESP32_GENERIC-20241129-v1.24.1.bin
 ```
+After the firmware update disconnect/connect the device to the same serial port on your pc
 Enjoy your ESP32 smart home setup! 🚀💡
